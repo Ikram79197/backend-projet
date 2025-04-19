@@ -2,6 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const { register, login, authenticateToken } = require('./auth');
+//const { register, login, authenticateToken } = require('./auth');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -31,19 +33,19 @@ let tasks = [
 ];
 
 // Route pour récupérer toutes les tâches
-app.get('/api/tasks', (req, res) => {
+app.get('/api/tasks', authenticateToken, (req, res) => {
   res.json(tasks);
 });
 
 // Route pour récupérer une tâche spécifique
-app.get('/api/tasks/:id', (req, res) => {
+app.get('/api/tasks/:id',authenticateToken, (req, res) => {
   const task = tasks.find(t => t.id === parseInt(req.params.id));
   if (!task) return res.status(404).json({ error: "Tâche non trouvée" });
   res.json(task);
 });
 
 // Route pour créer une nouvelle tâche
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks',authenticateToken, (req, res) => {
   const newTask = {
     id: tasks.length + 1,
     title: req.body.title,
@@ -54,7 +56,7 @@ app.post('/api/tasks', (req, res) => {
 });
 
 // Route pour modifier une tâche existante
-app.put('/api/tasks/:id', (req, res) => {
+app.put('/api/tasks/:id', authenticateToken,(req, res) => {
   const id = parseInt(req.params.id);
   const taskIndex = tasks.findIndex(t => t.id === id);
   
@@ -73,7 +75,7 @@ app.put('/api/tasks/:id', (req, res) => {
 });
 
 // Route pour supprimer une tâche
-app.delete('/api/tasks/:id', (req, res) => {
+app.delete('/api/tasks/:id',authenticateToken, (req, res) => {
   const id = parseInt(req.params.id);
   const taskIndex = tasks.findIndex(t => t.id === id);
   
@@ -85,4 +87,15 @@ app.delete('/api/tasks/:id', (req, res) => {
   tasks.splice(taskIndex, 1);
   
   res.json({ message: "Tâche supprimée avec succès", deletedTask });
+});
+
+// Route pour l'inscription
+app.post('/api/register', register);
+
+// Route pour la connexion
+app.post('/api/login', login);
+
+// Exemple de route protégée
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({ message: `Bienvenue, ${req.user.username}` });
 });
